@@ -31,7 +31,8 @@
     </div>
 
     <!-- 文件资源管理器 -->
-    <div class="file-explorer" v-if="showFileExplorer">
+    <!-- 文件资源管理器 -->
+    <div class="file-explorer" v-if="showFileExplorer" :style="{ width: explorerWidth + 'px' }">
       <div class="explorer-header">
         <h3>文件资源管理器</h3>
         <button class="icon-button" @click="refreshFileList" title="刷新">
@@ -43,7 +44,6 @@
           <div class="folder" v-for="folder in fileList" :key="folder.name">
             <div class="folder-header" @click="toggleFolder(folder)">
               <span class="icon">{{ folder.expanded ? '🗀' : '🗁' }}</span>
-
               <span class="folder-name">{{ folder.name }}</span>
             </div>
             <div class="folder-content" v-if="folder.expanded">
@@ -56,10 +56,14 @@
           </div>
         </div>
       </div>
+
+      <!-- 拖动句柄 -->
+      <div class="resizer" @mousedown="startResizing"></div>
     </div>
 
+
     <!-- 侧边栏 -->
-    <div class="sidebar">
+    <div v-if="isExplorerVisible" class="sidebar" :style="{ width: sidebarWidth + 'px' }">
       <div class="sidebar-header">
         <h3>{{ activeFile || '未选择文件' }}</h3>
       </div>
@@ -69,6 +73,7 @@
           <span class="outline-text">单元格 {{ index + 1 }}</span>
         </div>
       </div>
+      <div class="resizer" @mousedown.prevent="beginResize"></div>
     </div>
 
     <!-- 编辑器区域 -->
@@ -148,7 +153,7 @@
 </template>
 
 <script setup lang="ts">
-import { inject, ref, watch, nextTick, onMounted } from 'vue'
+import { inject, ref, watch, nextTick, onMounted, onBeforeUnmount } from 'vue'
 import { ThemeSymbol, Theme } from '../../theme-context'
 
 const themeContext = inject(ThemeSymbol)
@@ -162,9 +167,76 @@ watch(theme, (val) => {
 })
 
 const loading = ref(false)
-const showFileExplorer = ref(true)
-const activeFile = ref<string | null>(null)
 
+const activeFile = ref<string | null>(null)
+const showFileExplorer = ref(true)
+
+
+
+
+
+const isExplorerVisible = ref(true)
+const sidebarWidth = ref(250)
+const resizingActive = ref(false)
+let initialMouseX = 0
+let initialSidebarWidth = 250
+
+
+function onResizeMove(event) {
+  if (!resizingActive.value) return
+  const movementX = event.clientX - initialMouseX
+  sidebarWidth.value = Math.min(Math.max(initialSidebarWidth + movementX, 5), 800)
+}
+
+function onResizeEnd() {
+  resizingActive.value = false
+  document.removeEventListener('mousemove', onResizeMove)
+  document.removeEventListener('mouseup', onResizeEnd)
+}
+
+function beginResize(event) {
+  resizingActive.value = true
+  initialMouseX = event.clientX
+  initialSidebarWidth = sidebarWidth.value
+  document.addEventListener('mousemove', onResizeMove)
+  document.addEventListener('mouseup', onResizeEnd)
+}
+
+
+
+const currentFile = ref(null)
+
+
+
+const explorerWidth = ref(250)
+const isResizing = ref(false)
+let startX = 0
+let startWidth = 250
+
+
+
+
+
+// 拖动逻辑
+const startResizing = (e) => {
+  isResizing.value = true
+  startX = e.clientX
+  startWidth = explorerWidth.value
+  document.addEventListener('mousemove', resize)
+  document.addEventListener('mouseup', stopResizing)
+}
+
+const resize = (e) => {
+  if (!isResizing.value) return
+  const delta = e.clientX - startX
+  explorerWidth.value = Math.min(Math.max(startWidth + delta, 5), 1000)
+}
+
+const stopResizing = () => {
+  isResizing.value = false
+  document.removeEventListener('mousemove', resize)
+  document.removeEventListener('mouseup', stopResizing)
+}
 // 文件列表数据
 interface FileItem {
   name: string
@@ -370,6 +442,11 @@ const loadPageData = async () => {
 
 onMounted(() => {
   loadPageData();
+})
+onBeforeUnmount(() => {
+  stopResizing()
+  document.removeEventListener('mousemove', onResizeMove)
+  document.removeEventListener('mouseup', onResizeEnd)
 })
 </script>
 
@@ -837,5 +914,56 @@ textarea:disabled {
 /* 图标样式 */
 .icon {
   font-size: 18px;
+}
+
+.resizer {
+  width: 5px;
+  cursor: ew-resize;
+  position: absolute;
+  right: 0;
+  top: 0;
+  bottom: 0;
+  background: transparent;
+}
+
+.resizer:hover {
+  background: rgba(0, 0, 0, 0.1);
+}
+
+.file-explorer {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  min-width: 5px;
+  max-width: 600px;
+
+  position: relative;
+  user-select: none;
+
+}
+
+
+.sidebar {
+  height: 100vh;
+
+  overflow: auto;
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  min-width: 5px;
+  max-width: 600px;
+
+}
+
+
+.resizer {
+  position: absolute;
+  top: 0;
+  right: 0;
+  width: 6px;
+  height: 100%;
+  cursor: ew-resize;
+  user-select: none;
+  background-color: transparent;
 }
 </style>
