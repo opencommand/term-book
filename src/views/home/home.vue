@@ -155,7 +155,7 @@
 <script setup lang="ts">
 import { inject, ref, watch, nextTick, onMounted, onBeforeUnmount } from 'vue'
 import { ThemeSymbol, Theme } from '../../theme-context'
-
+import { getFileListApi, openFileApi } from '../../api/Document.ts'
 const themeContext = inject(ThemeSymbol)
 if (!themeContext) throw new Error('Theme context not provided')
 
@@ -256,7 +256,7 @@ const fileList = ref<FolderItem[]>([
     name: 'Notebooks',
     expanded: true,
     files: [
-      { name: '数据分析.ipynb', type: 'notebook', path: '/Notebooks/数据分析.ipynb' },
+      { name: '数据分析111.ipynb', type: 'notebook', path: '/Notebooks/数据分析11111.ipynb' },
       { name: '机器学习.ipynb', type: 'notebook', path: '/Notebooks/机器学习.ipynb' },
       { name: '可视化.ipynb', type: 'notebook', path: '/Notebooks/可视化.ipynb' }
     ]
@@ -331,17 +331,41 @@ function getFileIcon(filename: string): string {
   }
 }
 
-function openFile(file: FileItem) {
-  activeFile.value = file.name
-  // 这里可以根据文件类型加载不同的内容
-  if (file.type === 'notebook') {
-    // 模拟加载Notebook内容
-    cells.value = [
-      { id: generateId(), content: `# ${file.name}\n\nprint('加载 ${file.name} 内容')`, output: "" },
-      { id: generateId(), content: "# 在这里开始你的分析...", output: "" }
-    ]
+const loadFile = async (filename) => {
+  try {
+    const res = await openFileApi(filename)
+    return res.data
+  } catch (err) {
+    console.error('打开文件失败', err)
   }
 }
+
+const openFile = async (file: FileItem) => {
+  activeFile.value = file.name
+
+  try {
+    const fileData = await loadFile(file.name)
+
+    // 数据为空或格式不正确
+    if (!fileData || !Array.isArray(fileData.cells)) {
+      console.warn('文件内容无效或不包含 cells 字段', fileData)
+      cells.value = []
+      return
+    }
+
+    // 正常解析 cells
+    cells.value = fileData.cells.map((c, index) => ({
+      id: generateId(),
+      content: c?.input ?? `# 第 ${index + 1} 单元格无内容`,
+      output: c?.output ?? ''
+    }))
+  } catch (error) {
+    console.error('读取文件内容失败', error)
+    cells.value = [] // 确保界面不会残留旧内容
+  }
+}
+
+
 
 function createNewNotebook() {
   const newName = `未命名-${new Date().getTime()}.ipynb`
@@ -430,11 +454,52 @@ function scrollToCell(index: number) {
 const loadPageData = async () => {
   loading.value = true;
   try {
-    // 这里可以添加实际的API调用
-    await new Promise(resolve => setTimeout(resolve, 500));
-    console.log('数据加载完成');
+    const [fileRes] = await Promise.all([
+      getFileListApi(),
+      // getUserInfoApi(),
+      // getPermissionListApi()
+    ]);
+
+    // 处理文件列表
+    // console.log(fileRes, 'sdadas');
+
+    if (fileRes.success) {
+      try {
+        const rawFiles = fileRes.data
+        console.log(rawFiles);
+
+        if (Array.isArray(rawFiles) && fileList.value.length > 0) {
+          fileList.value[0].files = rawFiles.map((item: any) => ({
+            name: String(item),
+            type: 'notebook',
+            path: `/some/path/${item}`
+          }))
+        }
+      } catch (err) {
+        console.error('文件数据解析失败:', err)
+      }
+    } else {
+      console.warn('获取文件列表失败:', fileRes.message)
+    }
+
+
+    // // 示例：处理用户信息
+    // if (userRes.success) {
+    //   userInfo.value = userRes.data;
+    // } else {
+    //   console.warn('获取用户信息失败:', userRes.message);
+    // }
+
+    // // 示例：处理权限列表
+    // if (permRes.success) {
+    //   permissions.value = permRes.data || [];
+    // } else {
+    //   console.warn('获取权限失败:', permRes.message);
+    // }
+
   } catch (err) {
     console.error('页面加载失败:', err);
+    // errorMessage.value = '加载失败，请稍后再试';
   } finally {
     loading.value = false;
   }

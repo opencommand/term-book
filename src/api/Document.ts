@@ -34,3 +34,17 @@ export const getFileListApi = async () => {
     };
   }
 };
+
+// open file
+export const openFileApi = async (filename: string) => {
+  try {
+    const response = await apiClient.post('/document/open', {
+      filename
+    })
+
+    return response.data
+  } catch (error) {
+    console.error('打开文件失败:', error)
+    throw error
+  }
+}
