@@ -155,7 +155,7 @@
 <script setup lang="ts">
 import { inject, ref, watch, nextTick, onMounted, onBeforeUnmount } from 'vue'
 import { ThemeSymbol, Theme } from '../../theme-context'
-import { getFileListApi, openFileApi } from '../../api/Document.ts'
+import { getFileListApi, openFileApi, runCellApi } from '../../api/Document.ts'
 const themeContext = inject(ThemeSymbol)
 if (!themeContext) throw new Error('Theme context not provided')
 
@@ -402,48 +402,94 @@ function removeCell(index: number) {
   }
 }
 
-function executeCell(index: number) {
+// function executeCell(index: number) {
+//   const cell = cells.value[index];
+
+//   if (cell.isRunning) return;
+
+//   cell.isRunning = true;
+//   cell.currentExecutionTime = 0;
+//   cell.progress = 0;
+//   cell.output = "正在执行...";
+
+//   const startTime = Date.now();
+//   const totalDuration = 10000;
+
+//   cell.timer = window.setInterval(() => {
+//     const elapsed = Date.now() - startTime;
+//     cell.currentExecutionTime = elapsed;
+//     cell.progress = Math.min(100, (elapsed / totalDuration) * 100);
+
+//     if (elapsed > 3000 && !cell.output?.includes("加载数据...")) {
+//       cell.output = "正在执行...\n加载数据...";
+//     }
+//     if (elapsed > 6000 && !cell.output?.includes("处理中")) {
+//       cell.output = "正在执行...\n加载数据...\n处理中...";
+//     }
+
+//     if (elapsed >= totalDuration) {
+//       clearInterval(cell.timer);
+//       cell.isRunning = false;
+//       cell.executionTime = elapsed;
+//       cell.executionCount = (cell.executionCount || 0) + 1;
+
+//       const code = cell.content;
+//       if (code.includes("print(")) {
+//         cell.output = code.match(/print\((.*)\)/)?.[1] || "执行完成";
+//       } else if (code.includes("np.arange")) {
+//         cell.output = "array([0, 1, 2, 3, 4, 5, 6, 7, 8, 9])";
+//       } else {
+//         cell.output = "执行完成 (模拟输出)";
+//       }
+//     }
+//   }, 100);
+// }
+
+
+async function executeCell(index: number) {
+  // 获取指定的 cell
   const cell = cells.value[index];
 
+  // 如果正在执行，避免重复提交
   if (cell.isRunning) return;
 
+  // 设置执行状态
   cell.isRunning = true;
-  cell.currentExecutionTime = 0;
-  cell.progress = 0;
   cell.output = "正在执行...";
+  cell.progress = 0;
+  cell.currentExecutionTime = 0;
 
+  // 记录开始时间
   const startTime = Date.now();
-  const totalDuration = 10000;
 
-  cell.timer = window.setInterval(() => {
-    const elapsed = Date.now() - startTime;
-    cell.currentExecutionTime = elapsed;
-    cell.progress = Math.min(100, (elapsed / totalDuration) * 100);
+  try {
+    const startTime = Date.now();
 
-    if (elapsed > 3000 && !cell.output?.includes("加载数据...")) {
-      cell.output = "正在执行...\n加载数据...";
-    }
-    if (elapsed > 6000 && !cell.output?.includes("处理中")) {
-      cell.output = "正在执行...\n加载数据...\n处理中...";
-    }
+    // 假设 cell.content 是纯字符串命令
+    console.log(cell.content);
 
-    if (elapsed >= totalDuration) {
-      clearInterval(cell.timer);
-      cell.isRunning = false;
-      cell.executionTime = elapsed;
-      cell.executionCount = (cell.executionCount || 0) + 1;
+    const response = await runCellApi(cell.content);
 
-      const code = cell.content;
-      if (code.includes("print(")) {
-        cell.output = code.match(/print\((.*)\)/)?.[1] || "执行完成";
-      } else if (code.includes("np.arange")) {
-        cell.output = "array([0, 1, 2, 3, 4, 5, 6, 7, 8, 9])";
-      } else {
-        cell.output = "执行完成 (模拟输出)";
-      }
-    }
-  }, 100);
+    // response.data 是后端返回的data字段
+    const result = response.data;
+
+    cell.output = result.output || "执行完成";
+    cell.executionTime = result.exec_time || (Date.now() - startTime);
+    cell.executionCount = (cell.executionCount || 0) + 1;
+  } catch (error) {
+    cell.output = `执行出错：${(error as Error).message}`;
+  } finally {
+    cell.isRunning = false;
+    cell.progress = 100;
+  }
+
 }
+
+
+
+
+
+
 
 function scrollToCell(index: number) {
   if (cellElements.value[index]) {

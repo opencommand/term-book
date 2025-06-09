@@ -48,3 +48,18 @@ export const openFileApi = async (filename: string) => {
     throw error
   }
 }
+
+// run cell
+export const runCellApi = async (input: string) => {
+  try {
+    const response = await apiClient.post('/run-cell', {
+      input
+    })
+    console.log(response.data);
+
+    return response.data
+  } catch (error) {
+    console.error('运行失败:', error)
+    throw error
+  }
+}
