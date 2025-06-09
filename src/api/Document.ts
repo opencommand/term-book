@@ -63,3 +63,26 @@ export const runCellApi = async (input: string) => {
     throw error
   }
 }
+
+// save file
+export const saveFileApi = async (data: {
+  author: string;
+  filename: string;
+  cells: {
+    exec_time: string;
+    input: string;
+    input_time: string;
+    output: string;
+    output_time: string;
+  }[];
+}) => {
+  try {
+    const response = await apiClient.post('/document/save', data);
+    console.log('保存成功:', response.data);
+
+    return response.data;
+  } catch (error) {
+    console.error('保存失败:', error);
+    throw error;
+  }
+};

@@ -114,7 +114,12 @@
                 <button @click="addCell(index)" class="icon-button" title="添加单元格" :disabled="cell.isRunning">+</button>
                 <button @click="removeCell(index)" class="icon-button" title="删除单元格"
                   :disabled="cell.isRunning">×</button>
+
+                <!-- ✅ 新增的保存按钮 -->
+                <button @click="saveCell(index)" class="icon-button" title="保存单元格"
+                  :disabled="cell.isRunning">💾</button>
               </div>
+
             </div>
             <div class="code-editor">
               <textarea v-model="cell.content" class="code-input"
@@ -153,12 +158,12 @@
 </template>
 
 <script setup lang="ts">
-import { inject, ref, watch, nextTick, onMounted, onBeforeUnmount } from 'vue'
+import { inject, ref, watch, nextTick, onMounted, onBeforeUnmount, toRaw } from 'vue'
 import { ThemeSymbol, Theme } from '../../theme-context'
-import { getFileListApi, openFileApi, runCellApi } from '../../api/Document.ts'
+import { getFileListApi, openFileApi, runCellApi, saveFileApi } from '../../api/Document.ts'
 const themeContext = inject(ThemeSymbol)
 if (!themeContext) throw new Error('Theme context not provided')
-
+const currentFile = ref<FileItem | null>(null)
 const { theme, setTheme } = themeContext
 const selected = ref<Theme>(theme.value)
 
@@ -204,7 +209,7 @@ function beginResize(event) {
 
 
 
-const currentFile = ref(null)
+
 
 
 
@@ -342,7 +347,7 @@ const loadFile = async (filename) => {
 
 const openFile = async (file: FileItem) => {
   activeFile.value = file.name
-
+  currentFile.value = file
   try {
     const fileData = await loadFile(file.name)
 
@@ -444,6 +449,34 @@ function removeCell(index: number) {
 //     }
 //   }, 100);
 // }
+
+
+
+async function saveCell(index: number) {
+  const rawCell = toRaw(cells.value[index]);
+
+  // 手动映射字段
+  const formattedCell = {
+    input: rawCell.content || "",
+    output: rawCell.output || "",
+    input_time: rawCell.input_time || new Date().toISOString(),
+    output_time: rawCell.output_time || new Date().toISOString(),
+    exec_time: rawCell.exec_time || "0ms"
+  };
+
+  const documentToSave = {
+    author: "defineAuthor",
+    filename: currentFile.value?.name || `cell-${index + 1}.json`,
+    cells: [formattedCell]
+  };
+
+  try {
+    const result = await saveFileApi(documentToSave);
+    alert(result.msg || `单元格 ${index + 1} 保存成功`);
+  } catch (error) {
+    alert(`保存失败：${(error as Error).message}`);
+  }
+}
 
 
 async function executeCell(index: number) {
