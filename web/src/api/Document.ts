@@ -6,19 +6,26 @@ const apiClient = axios.create({
   headers: { 'Content-Type': 'application/json' }
 });
 
+interface Response<T> {
+  msg: string;
+  data: T;
+}
+
+type DocumentGetResponse = Response<string[]>
+
 // get fill list
 export const getFileListApi = async () => {
   try {
-    const { data } = await apiClient.get('/document/list');
+    const res = ((await apiClient.get('/document/list')).data) as DocumentGetResponse;
 
-    if (!Array.isArray(data.data)) {
+    if (!Array.isArray(res.data)) {
       throw new Error('返回数据格式错误');
     }
 
     return {
       success: true,
-      data: data.data,
-      message: data.msg || '获取成功'
+      data: res.data,
+      message: res.msg || '获取成功'
     };
   } catch (error) {
     const message =
@@ -49,23 +56,27 @@ export const openFileApi = async (filename: string) => {
   }
 }
 
+type RunCellResponse = Response<{
+  output: string;
+  output_time: string;
+  exec_time: string | number;
+}>
+
 // run cell
 export const runCellApi = async (input: string) => {
   try {
-    const response = await apiClient.post('/run-cell', {
+    const res = (await apiClient.post('/run-cell', {
       input
-    })
-    console.log(response.data);
+    })).data as RunCellResponse
 
-    return response.data
+    return res
   } catch (error) {
     console.error('运行失败:', error)
     throw error
   }
 }
 
-// save file
-export const saveFileApi = async (data: {
+interface SaveFileRequest {
   author: string;
   filename: string;
   cells: {
@@ -75,7 +86,10 @@ export const saveFileApi = async (data: {
     output: string;
     output_time: string;
   }[];
-}) => {
+}
+
+// save file
+export const saveFileApi = async (data: SaveFileRequest) => {
   try {
     const response = await apiClient.post('/document/save', data);
     console.log('保存成功:', response.data);

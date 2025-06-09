@@ -4,8 +4,10 @@ go 1.24.2
 
 require (
 	github.com/caarlos0/log v0.4.8
+	github.com/creack/pty v1.1.24
 	github.com/gin-contrib/cors v1.7.5
 	github.com/gin-gonic/gin v1.10.1
+	github.com/gorilla/websocket v1.5.3
 	github.com/magefile/mage v1.15.0
 	github.com/relvacode/iso8601 v1.6.0
 	github.com/spf13/viper v1.20.1
