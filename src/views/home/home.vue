@@ -3,21 +3,22 @@
     <!-- 活动栏 -->
     <div class="activity-bar">
       <div class="activity-bar-items">
-        <button class="activity-item active" title="文件资源管理器">
-          <span class="icon">📁</span>
+        <button class="activity-item active" title="文件资源管理器" @click="toggleFileExplorer">
+          <span class="icon">🗂</span> <!-- 黑白文件夹图标 -->
         </button>
         <button class="activity-item" title="搜索">
-          <span class="icon">🔍</span>
+          <span class="icon">🔍</span> <!-- 黑白放大镜 -->
         </button>
         <button class="activity-item" title="源代码管理">
-          <span class="icon">🔃</span>
+          <span class="icon">↻</span> <!-- 更简洁的同步/刷新 -->
         </button>
         <button class="activity-item" title="运行和调试">
-          <span class="icon">▶</span>
+          <span class="icon">▶</span> <!-- 黑色播放符号 -->
         </button>
         <button class="activity-item" title="扩展">
-          <span class="icon">🧩</span>
+          <span class="icon">＋</span> <!-- 黑白加号 -->
         </button>
+
       </div>
       <div class="theme-selector">
         <select v-model="selected" @change="setTheme(selected)">
@@ -29,10 +30,38 @@
       </div>
     </div>
 
+    <!-- 文件资源管理器 -->
+    <div class="file-explorer" v-if="showFileExplorer">
+      <div class="explorer-header">
+        <h3>文件资源管理器</h3>
+        <button class="icon-button" @click="refreshFileList" title="刷新">
+          <span class="icon">↻</span>
+        </button>
+      </div>
+      <div class="explorer-content">
+        <div class="file-tree">
+          <div class="folder" v-for="folder in fileList" :key="folder.name">
+            <div class="folder-header" @click="toggleFolder(folder)">
+              <span class="icon">{{ folder.expanded ? '🗀' : '🗁' }}</span>
+
+              <span class="folder-name">{{ folder.name }}</span>
+            </div>
+            <div class="folder-content" v-if="folder.expanded">
+              <div class="file-item" v-for="file in folder.files" :key="file.name"
+                :class="{ active: activeFile === file.name }" @click="openFile(file)">
+                <span class="icon">{{ getFileIcon(file.name) }}</span>
+                <span class="file-name">{{ file.name }}</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
     <!-- 侧边栏 -->
     <div class="sidebar">
       <div class="sidebar-header">
-        <h3>NOTEBOOK.ipynb</h3>
+        <h3>{{ activeFile || '未选择文件' }}</h3>
       </div>
       <div class="sidebar-content">
         <div class="outline-item" v-for="(cell, index) in cells" :key="cell.id" @click="scrollToCell(index)">
@@ -58,57 +87,69 @@
       </div>
 
       <!-- 编辑器内容 -->
-      <!-- 编辑器内容 -->
       <div class="editor-content">
-        <div class="cell code-cell" v-for="(cell, index) in cells" :key="cell.id" ref="cellElements">
-          <div class="cell-toolbar">
-            <span class="cell-index">In [{{ cell.executionCount || ' ' }}]:</span>
-            <div class="cell-actions">
-              <button @click="executeCell(index)" class="run-button" title="运行单元格" :disabled="cell.isRunning">
-                <span class="icon">{{ cell.isRunning ? '⏳' : '▶' }}</span>
-              </button>
-              <button @click="addCell(index)" class="icon-button" title="添加单元格" :disabled="cell.isRunning">+</button>
-              <button @click="removeCell(index)" class="icon-button" title="删除单元格" :disabled="cell.isRunning">×</button>
-            </div>
-          </div>
-          <div class="code-editor">
-            <textarea v-model="cell.content" class="code-input"
-              :placeholder="index === 0 ? '输入代码并按Shift+Enter运行' : '输入代码...'" :disabled="cell.isRunning"></textarea>
-          </div>
-          <div class="cell-output" v-if="cell.output || cell.isRunning">
-            <div class="output-content">
-              <pre>{{ cell.output }}</pre>
-              <div class="execution-info">
-                <div v-if="cell.isRunning" class="execution-progress">
-                  <span class="progress-icon">⏳</span>
-                  <span>正在运行... {{ cell.currentExecutionTime }}ms</span>
-                  <progress :value="cell.progress" max="100"></progress>
-                </div>
-                <div v-if="!cell.isRunning && cell.executionTime" class="execution-time">
-                  <span class="time-icon">⏱️</span>
-                  <span>执行时间: {{ cell.executionTime }}ms</span>
-                </div>
-              </div>
-            </div>
+        <div v-if="!activeFile" class="empty-editor">
+          <div class="empty-message">
+            <h3>欢迎使用 Notebook 编辑器</h3>
+            <p>请从文件资源管理器中选择一个文件开始编辑</p>
+            <button @click="createNewNotebook" class="new-notebook-button">
+              + 创建新 Notebook
+            </button>
           </div>
         </div>
 
-        <!-- 添加新单元格按钮 -->
-        <div class="add-cell-container">
-          <button @click="addCell(cells.length)" class="add-cell-button">
-            + 添加代码单元格
-          </button>
-        </div>
+        <template v-else>
+          <div class="cell code-cell" v-for="(cell, index) in cells" :key="cell.id" ref="cellElements">
+            <div class="cell-toolbar">
+              <span class="cell-index">In [{{ cell.executionCount || ' ' }}]:</span>
+              <div class="cell-actions">
+                <button @click="executeCell(index)" class="run-button" title="运行单元格" :disabled="cell.isRunning">
+                  <span class="icon">{{ cell.isRunning ? '⏳' : '▶' }}</span>
+                </button>
+                <button @click="addCell(index)" class="icon-button" title="添加单元格" :disabled="cell.isRunning">+</button>
+                <button @click="removeCell(index)" class="icon-button" title="删除单元格"
+                  :disabled="cell.isRunning">×</button>
+              </div>
+            </div>
+            <div class="code-editor">
+              <textarea v-model="cell.content" class="code-input"
+                :placeholder="index === 0 ? '输入代码并按Shift+Enter运行' : '输入代码...'" :disabled="cell.isRunning"></textarea>
+            </div>
+            <div class="cell-output" v-if="cell.output || cell.isRunning">
+              <div class="output-content">
+                <pre>{{ cell.output }}</pre>
+                <div class="execution-info">
+                  <div v-if="cell.isRunning" class="execution-progress">
+                    <span class="progress-icon">⌛</span> <!-- 黑白沙漏 -->
+                    <span>正在运行... {{ cell.currentExecutionTime }}ms</span>
+                    <progress :value="cell.progress" max="100"></progress>
+                  </div>
+                  <div v-if="!cell.isRunning && cell.executionTime" class="execution-time">
+                    <span class="time-icon">⏲</span> <!-- 黑白定时器 -->
+                    <span>执行时间: {{ cell.executionTime }}ms</span>
+                  </div>
+                </div>
+
+              </div>
+            </div>
+          </div>
+
+          <!-- 添加新单元格按钮 -->
+          <div class="add-cell-container">
+            <button @click="addCell(cells.length)" class="add-cell-button">
+              + 添加代码单元格
+            </button>
+          </div>
+        </template>
       </div>
     </div>
   </div>
+  <div v-else>loading </div>
 </template>
 
 <script setup lang="ts">
 import { inject, ref, watch, nextTick, onMounted } from 'vue'
 import { ThemeSymbol, Theme } from '../../theme-context'
-
-import { getFileListApi } from '../../api/Document.ts'
 
 const themeContext = inject(ThemeSymbol)
 if (!themeContext) throw new Error('Theme context not provided')
@@ -121,6 +162,51 @@ watch(theme, (val) => {
 })
 
 const loading = ref(false)
+const showFileExplorer = ref(true)
+const activeFile = ref<string | null>(null)
+
+// 文件列表数据
+interface FileItem {
+  name: string
+  type: string
+  path: string
+  content?: string
+}
+
+interface FolderItem {
+  name: string
+  expanded: boolean
+  files: FileItem[]
+}
+
+const fileList = ref<FolderItem[]>([
+  {
+    name: 'Notebooks',
+    expanded: true,
+    files: [
+      { name: '数据分析.ipynb', type: 'notebook', path: '/Notebooks/数据分析.ipynb' },
+      { name: '机器学习.ipynb', type: 'notebook', path: '/Notebooks/机器学习.ipynb' },
+      { name: '可视化.ipynb', type: 'notebook', path: '/Notebooks/可视化.ipynb' }
+    ]
+  },
+  {
+    name: '数据集',
+    expanded: false,
+    files: [
+      { name: 'sales_data.csv', type: 'csv', path: '/数据集/sales_data.csv' },
+      { name: 'customer_data.json', type: 'json', path: '/数据集/customer_data.json' }
+    ]
+  },
+  {
+    name: '脚本',
+    expanded: false,
+    files: [
+      { name: 'utils.py', type: 'python', path: '/脚本/utils.py' },
+      { name: 'config.py', type: 'python', path: '/脚本/config.py' }
+    ]
+  }
+])
+
 // 单元格数据
 interface Cell {
   id: string;
@@ -146,6 +232,56 @@ function generateId(): string {
   return Math.random().toString(36).substring(2, 9)
 }
 
+function toggleFileExplorer() {
+  showFileExplorer.value = !showFileExplorer.value
+}
+
+function refreshFileList() {
+  loading.value = true
+  // 模拟API调用延迟
+  setTimeout(() => {
+    loading.value = false
+  }, 800)
+}
+
+function toggleFolder(folder: FolderItem) {
+  folder.expanded = !folder.expanded
+}
+
+function getFileIcon(filename: string): string {
+  const ext = filename.split('.').pop()?.toLowerCase()
+  switch (ext) {
+    case 'ipynb': return '📓'
+    case 'py': return '🐍'
+    case 'csv': return '📊'
+    case 'json': return '🔣'
+    default: return '📄'
+  }
+}
+
+function openFile(file: FileItem) {
+  activeFile.value = file.name
+  // 这里可以根据文件类型加载不同的内容
+  if (file.type === 'notebook') {
+    // 模拟加载Notebook内容
+    cells.value = [
+      { id: generateId(), content: `# ${file.name}\n\nprint('加载 ${file.name} 内容')`, output: "" },
+      { id: generateId(), content: "# 在这里开始你的分析...", output: "" }
+    ]
+  }
+}
+
+function createNewNotebook() {
+  const newName = `未命名-${new Date().getTime()}.ipynb`
+  fileList.value[0].files.unshift({
+    name: newName,
+    type: 'notebook',
+    path: `/Notebooks/${newName}`
+  })
+  fileList.value[0].expanded = true
+  openFile(fileList.value[0].files[0])
+}
+
 function addCell(index: number) {
   cells.value.splice(index + 1, 0, {
     id: generateId(),
@@ -162,7 +298,6 @@ function addCell(index: number) {
 }
 
 function removeCell(index: number) {
-  // 如果单元格正在运行，清除定时器
   if (cells.value[index].timer) {
     clearInterval(cells.value[index].timer);
   }
@@ -174,26 +309,21 @@ function removeCell(index: number) {
 function executeCell(index: number) {
   const cell = cells.value[index];
 
-  // 如果已经在运行，则不做任何操作
   if (cell.isRunning) return;
 
-  // 初始化运行状态
   cell.isRunning = true;
   cell.currentExecutionTime = 0;
   cell.progress = 0;
   cell.output = "正在执行...";
 
-  // 模拟10秒执行过程
   const startTime = Date.now();
-  const totalDuration = 10000; // 10秒
+  const totalDuration = 10000;
 
-  // 更新计时器和进度
   cell.timer = window.setInterval(() => {
     const elapsed = Date.now() - startTime;
     cell.currentExecutionTime = elapsed;
     cell.progress = Math.min(100, (elapsed / totalDuration) * 100);
 
-    // 模拟执行过程中的输出变化
     if (elapsed > 3000 && !cell.output?.includes("加载数据...")) {
       cell.output = "正在执行...\n加载数据...";
     }
@@ -201,14 +331,12 @@ function executeCell(index: number) {
       cell.output = "正在执行...\n加载数据...\n处理中...";
     }
 
-    // 执行完成
     if (elapsed >= totalDuration) {
       clearInterval(cell.timer);
       cell.isRunning = false;
       cell.executionTime = elapsed;
       cell.executionCount = (cell.executionCount || 0) + 1;
 
-      // 模拟执行结果
       const code = cell.content;
       if (code.includes("print(")) {
         cell.output = code.match(/print\((.*)\)/)?.[1] || "执行完成";
@@ -230,40 +358,11 @@ function scrollToCell(index: number) {
 const loadPageData = async () => {
   loading.value = true;
   try {
-    const [fileRes] = await Promise.all([
-      getFileListApi(),
-      // getUserInfoApi(),
-      // getPermissionListApi()
-    ]);
-
-    // 处理文件列表
-    console.log(fileRes, 'sdadas');
-
-    // if (fileRes.success) {
-    //   // fileList.value = fileRes.data || [];
-    //   console.log(fileRes);
-
-    // } else {
-    //   console.warn('获取文件列表失败:', fileRes.message);
-    // }
-
-    // // 示例：处理用户信息
-    // if (userRes.success) {
-    //   userInfo.value = userRes.data;
-    // } else {
-    //   console.warn('获取用户信息失败:', userRes.message);
-    // }
-
-    // // 示例：处理权限列表
-    // if (permRes.success) {
-    //   permissions.value = permRes.data || [];
-    // } else {
-    //   console.warn('获取权限失败:', permRes.message);
-    // }
-
+    // 这里可以添加实际的API调用
+    await new Promise(resolve => setTimeout(resolve, 500));
+    console.log('数据加载完成');
   } catch (err) {
     console.error('页面加载失败:', err);
-    // errorMessage.value = '加载失败，请稍后再试';
   } finally {
     loading.value = false;
   }
@@ -301,8 +400,6 @@ onMounted(() => {
   gap: 12px;
 }
 
-
-
 .activity-item {
   width: 48px;
   height: 48px;
@@ -319,7 +416,6 @@ onMounted(() => {
   box-shadow: none;
 }
 
-
 .activity-item:hover {
   opacity: 0.8;
   background-color: var(--hover-bg);
@@ -332,9 +428,7 @@ onMounted(() => {
 }
 
 .theme-selector {
-  /* font-size: 10px; */
-  /* padding: 10px; */
-  /* padding-left: 0; */
+  padding: 4px 0;
 }
 
 .theme-selector select {
@@ -345,6 +439,97 @@ onMounted(() => {
   border-radius: 4px;
   padding: 4px;
   font-size: 12px;
+}
+
+/* 文件资源管理器样式 */
+.file-explorer {
+  width: 250px;
+  background-color: var(--card-bg);
+  border-right: 1px solid var(--border-color);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.explorer-header {
+  padding: 12px;
+  border-bottom: 1px solid var(--border-color);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.explorer-header h3 {
+  margin: 0;
+  font-size: 14px;
+  font-weight: bold;
+}
+
+.explorer-content {
+  flex: 1;
+  overflow-y: auto;
+  padding: 8px 0;
+}
+
+.file-tree {
+  padding: 0 8px;
+}
+
+.folder {
+  margin-bottom: 4px;
+}
+
+.folder-header {
+  padding: 6px 8px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13px;
+  border-radius: 4px;
+}
+
+.folder-header>.icon {
+  font-size: 12px;
+}
+
+.folder-header:hover {
+  background-color: var(--hover-bg);
+}
+
+.folder-name {
+  flex: 1;
+}
+
+.folder-content {
+  padding-left: 24px;
+}
+
+.file-item {
+  padding: 6px 8px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13px;
+  border-radius: 4px;
+}
+
+.file-item>.icon {
+  font-size: 12px;
+}
+
+.file-item:hover {
+  background-color: var(--hover-bg);
+}
+
+.file-item.active {
+  background-color: var(--highlight-color);
+  font-weight: bold;
+}
+
+.file-name {
+  flex: 1;
 }
 
 /* 侧边栏样式 */
@@ -360,6 +545,7 @@ onMounted(() => {
   padding: 12px;
   border-bottom: 1px solid var(--border-color);
   font-weight: bold;
+  font-size: 14px;
 }
 
 .sidebar-content {
@@ -398,6 +584,35 @@ onMounted(() => {
   flex: 1;
   overflow-y: auto;
   padding: 20px;
+}
+
+.empty-editor {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+  color: var(--text-color);
+  opacity: 0.7;
+}
+
+.empty-message {
+  text-align: center;
+  max-width: 400px;
+}
+
+.empty-message h3 {
+  margin-bottom: 16px;
+}
+
+.new-notebook-button {
+  margin-top: 20px;
+  padding: 10px 20px;
+  background-color: var(--button-bg);
+  color: var(--button-text-color);
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 14px;
 }
 
 /* 状态栏样式 */
@@ -455,6 +670,10 @@ onMounted(() => {
   padding: 2px 8px;
   font-size: 12px;
   min-width: 0;
+}
+
+.run-button>span {
+  font-size: 10px;
 }
 
 .icon-button {
@@ -532,25 +751,7 @@ onMounted(() => {
   border-style: solid;
 }
 
-/* 主题特定的调整 */
-.dark .code-input,
-.dark .output-content {
-  background-color: var(--input-bg);
-}
-
-.solarized .code-input {
-  color: #586e75;
-}
-
-.dracula .cell-toolbar {
-  background-color: var(--card-bg);
-}
-
-.dracula .activity-item.active {
-  background-color: var(--accent-color);
-  color: white;
-}
-
+/* 执行信息样式 */
 .execution-info {
   margin-top: 8px;
   font-size: 12px;
@@ -603,6 +804,24 @@ textarea:disabled {
 }
 
 /* 主题特定的样式调整 */
+.dark .code-input,
+.dark .output-content {
+  background-color: var(--input-bg);
+}
+
+.solarized .code-input {
+  color: #586e75;
+}
+
+.dracula .cell-toolbar {
+  background-color: var(--card-bg);
+}
+
+.dracula .activity-item.active {
+  background-color: var(--accent-color);
+  color: white;
+}
+
 .dark .execution-progress {
   color: #e0e0e0;
 }
@@ -613,5 +832,10 @@ textarea:disabled {
 
 .dracula .execution-progress {
   color: #f8f8f2;
+}
+
+/* 图标样式 */
+.icon {
+  font-size: 18px;
 }
 </style>
