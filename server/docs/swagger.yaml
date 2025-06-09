@@ -1,0 +1,244 @@
+basePath: /
+definitions:
+  api.ListDocumentResponse:
+    properties:
+      data:
+        items:
+          type: string
+        type: array
+      msg:
+        type: string
+    type: object
+  api.NewDocumentRequest:
+    properties:
+      filename:
+        type: string
+    type: object
+  api.OpenDocumentRequest:
+    properties:
+      filename:
+        type: string
+    type: object
+  api.ResponseBad:
+    properties:
+      msg:
+        type: string
+    type: object
+  api.ResponseNewDocument:
+    properties:
+      data:
+        $ref: '#/definitions/model.Document'
+      msg:
+        type: string
+    type: object
+  api.ResponseOpenDocument:
+    properties:
+      data:
+        $ref: '#/definitions/model.Document'
+      msg:
+        type: string
+    type: object
+  api.ResponseRunCell:
+    properties:
+      data:
+        $ref: '#/definitions/api.RunCellResponse'
+      msg:
+        type: string
+    type: object
+  api.RunCellRequest:
+    properties:
+      input:
+        example: echo Hello World
+        type: string
+    type: object
+  api.RunCellResponse:
+    properties:
+      exec_time:
+        example: 150ms
+        type: string
+      output:
+        type: string
+      output_time:
+        example: "2025-06-09T13:11:45.3390718+08:00"
+        type: string
+    type: object
+  api.SaveDocumentRequest:
+    properties:
+      author:
+        type: string
+      cells:
+        items:
+          $ref: '#/definitions/model.Cell'
+        type: array
+      filename:
+        type: string
+    type: object
+  model.Cell:
+    properties:
+      exec_time:
+        type: string
+      input:
+        type: string
+      input_time:
+        type: string
+      output:
+        type: string
+      output_time:
+        type: string
+    type: object
+  model.Document:
+    properties:
+      author:
+        type: string
+      cells:
+        items:
+          $ref: '#/definitions/model.Cell'
+        type: array
+      filename:
+        type: string
+    type: object
+host: localhost:8080
+info:
+  contact: {}
+  description: TermBook 的后端接口文档
+  title: TermBook API
+  version: "1.0"
+paths:
+  /document/list:
+    get:
+      description: 获取所有可打开的文档
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 查询成功返回文档名数组
+          schema:
+            $ref: '#/definitions/api.ListDocumentResponse'
+        "500":
+          description: 目录遍历失败
+          schema:
+            $ref: '#/definitions/api.ResponseBad'
+      summary: 获取所有文档文件名
+      tags:
+      - Document
+  /document/new:
+    post:
+      consumes:
+      - application/json
+      description: 创建一个空文档并保存
+      parameters:
+      - description: 新建文档请求
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/api.NewDocumentRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/api.ResponseNewDocument'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/api.ResponseBad'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/api.ResponseBad'
+      summary: 新建文档
+      tags:
+      - Document
+  /document/open:
+    post:
+      consumes:
+      - application/json
+      description: 从文件中读取文档内容
+      parameters:
+      - description: 文档文件名
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/api.OpenDocumentRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/api.ResponseOpenDocument'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/api.ResponseBad'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/api.ResponseBad'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/api.ResponseBad'
+      summary: 打开文档
+      tags:
+      - Document
+  /document/save:
+    post:
+      consumes:
+      - application/json
+      description: 将当前文档保存到文件中
+      parameters:
+      - description: 要保存的文档内容
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/api.SaveDocumentRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/api.ResponseBad'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/api.ResponseBad'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/api.ResponseBad'
+      summary: 保存文档
+      tags:
+      - Document
+  /run-cell:
+    post:
+      consumes:
+      - application/json
+      description: 执行输入的命令并返回输出结果
+      parameters:
+      - description: 命令输入
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/api.RunCellRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/api.ResponseRunCell'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/api.ResponseBad'
+      summary: 执行单元格命令
+      tags:
+      - Cell
+swagger: "2.0"

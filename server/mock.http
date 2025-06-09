@@ -1,0 +1,43 @@
+@baseUrl = http://localhost:8080
+
+POST {{baseUrl}}/document/new HTTP/1.1
+content-type: application/json
+
+{
+    "filename": "test-document"
+}
+
+###
+
+POST {{baseUrl}}/document/open HTTP/1.1
+content-type: application/json
+
+{
+    "filename": "test-document"
+}
+
+###
+
+POST {{baseUrl}}/document/save HTTP/1.1
+content-type: application/json
+
+{
+    "filename": "test-document",
+    "author": "opencmd",
+    "cells": null
+}
+
+###
+
+GET {{baseUrl}}/document/list HTTP/1.1
+content-type: application/json
+
+
+###
+
+POST {{baseUrl}}/run-cell HTTP/1.1
+content-type: application/json
+
+{
+    "input": "echo Hello World"
+}
