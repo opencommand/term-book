@@ -1,5 +1,5 @@
 <template>
-  <div :class="['vscode-container', theme]">
+  <div :class="['vscode-container', theme]" v-if="!loading">
     <!-- 活动栏 -->
     <div class="activity-bar">
       <div class="activity-bar-items">
@@ -105,8 +105,10 @@
 </template>
 
 <script setup lang="ts">
-import { inject, ref, watch, nextTick } from 'vue'
+import { inject, ref, watch, nextTick, onMounted } from 'vue'
 import { ThemeSymbol, Theme } from '../../theme-context'
+
+import { getFileListApi } from '../../api/Document.ts'
 
 const themeContext = inject(ThemeSymbol)
 if (!themeContext) throw new Error('Theme context not provided')
@@ -118,6 +120,7 @@ watch(theme, (val) => {
   selected.value = val
 })
 
+const loading = ref(false)
 // 单元格数据
 interface Cell {
   id: string;
@@ -223,6 +226,52 @@ function scrollToCell(index: number) {
     cellElements.value[index].scrollIntoView({ behavior: 'smooth' })
   }
 }
+
+const loadPageData = async () => {
+  loading.value = true;
+  try {
+    const [fileRes] = await Promise.all([
+      getFileListApi(),
+      // getUserInfoApi(),
+      // getPermissionListApi()
+    ]);
+
+    // 处理文件列表
+    console.log(fileRes, 'sdadas');
+
+    // if (fileRes.success) {
+    //   // fileList.value = fileRes.data || [];
+    //   console.log(fileRes);
+
+    // } else {
+    //   console.warn('获取文件列表失败:', fileRes.message);
+    // }
+
+    // // 示例：处理用户信息
+    // if (userRes.success) {
+    //   userInfo.value = userRes.data;
+    // } else {
+    //   console.warn('获取用户信息失败:', userRes.message);
+    // }
+
+    // // 示例：处理权限列表
+    // if (permRes.success) {
+    //   permissions.value = permRes.data || [];
+    // } else {
+    //   console.warn('获取权限失败:', permRes.message);
+    // }
+
+  } catch (err) {
+    console.error('页面加载失败:', err);
+    // errorMessage.value = '加载失败，请稍后再试';
+  } finally {
+    loading.value = false;
+  }
+};
+
+onMounted(() => {
+  loadPageData();
+})
 </script>
 
 <style scoped>
@@ -283,7 +332,9 @@ function scrollToCell(index: number) {
 }
 
 .theme-selector {
-  padding: 10px;
+  /* font-size: 10px; */
+  /* padding: 10px; */
+  /* padding-left: 0; */
 }
 
 .theme-selector select {
