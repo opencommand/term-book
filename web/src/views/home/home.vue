@@ -223,8 +223,10 @@
 
             </div>
             <div class="code-editor">
-              <textarea v-model="cell.content" class="code-input"
-                :placeholder="index === 0 ? '输入代码并按Shift+Enter运行' : '输入代码...'" :disabled="cell.isRunning"></textarea>
+              <!-- <textarea v-model="cell.content" class="code-input"
+                :placeholder="index === 0 ? '输入代码并按Shift+Enter运行' : '输入代码...'" :disabled="cell.isRunning"></textarea> -->
+              <CodeEditor v-model="cell.content" :language="language" :readOnly="cell.isRunning" :theme="monacoTheme"
+                @run="executeCell" @save="saveCell" ref="codeEditorRef" />
             </div>
             <div class="cell-output" v-if="cell.output || cell.isRunning">
               <div class="output-content">
@@ -277,7 +279,7 @@
 </template>
 
 <script setup lang="ts">
-import { inject, ref, watch, nextTick, onMounted, onBeforeUnmount, toRaw } from 'vue'
+import { inject, ref, watch, nextTick, onMounted, onBeforeUnmount, toRaw, computed } from 'vue'
 import { ThemeSymbol, Theme } from '../../theme-context'
 import { getFileListApi, openFileApi, runCellApi, saveFileApi } from '../../api/Document.ts'
 import FileExplorer from '../../components/FileExplorer.vue'
@@ -286,6 +288,40 @@ if (!themeContext) throw new Error('Theme context not provided')
 const currentFile = ref<FileItem | null>(null)
 const { theme, setTheme } = themeContext
 const selected = ref<Theme>(theme.value)
+import CodeEditor from '../../components/CodeEditor.vue'
+
+
+const props = defineProps({
+  cell: {
+    type: Object as () => Cell,
+    required: true
+  },
+  language: {
+    type: String,
+    default: 'python'
+  }
+})
+
+const emit = defineEmits(['update:cell', 'execute', 'add', 'remove'])
+
+const codeEditorRef = ref<InstanceType<typeof CodeEditor> | null>(null)
+
+// 计算Monaco主题名称
+// 根据 theme 动态返回 monaco 主题名
+const monacoTheme = computed(() => {
+  switch (theme.value) {
+    case 'light':
+      return 'vs'
+    case 'dark':
+      return 'vs-dark'
+    case 'solarized':
+      return 'solarized'
+    case 'dracula':
+      return 'dracula'
+    default:
+      return 'vs'
+  }
+})
 
 watch(theme, (val) => {
   selected.value = val
@@ -326,6 +362,31 @@ async function handleOpenFile(file: any) {
 function handleCreateFile({ folder, name }: any) {
   console.log('新建文件:', folder, name);
   // 实现新建文件逻辑
+}
+
+
+// 创建新文件夹
+function handleCreateFolder({ parent, name }: { parent: FolderItem, name: string }) {
+  if (!name.trim()) return;
+
+
+}
+
+// 删除文件
+function handleDeleteFile(file: FileItem) {
+
+}
+
+// 删除文件夹
+function handleDeleteFolder(folder: FolderItem) {
+
+}
+
+// 重命名文件
+function handleRenameFile({ file, newName }: { file: FileItem, newName: string }) {
+  if (!newName.trim()) return;
+
+
 }
 
 
