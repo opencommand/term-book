@@ -280,15 +280,15 @@
 
 <script setup lang="ts">
 import { inject, ref, watch, nextTick, onMounted, onBeforeUnmount, toRaw, computed } from 'vue'
-import { ThemeSymbol, Theme } from '../../theme-context'
-import { getFileListApi, openFileApi, runCellApi, saveFileApi } from '../../api/Document.ts'
-import FileExplorer from '../../components/FileExplorer.vue'
+import { ThemeSymbol, Theme } from '@/theme-context'
+import { getFileListApi, openFileApi, runCellApi, saveFileApi } from '@/api/Document'
+import FileExplorer from '@/components/FileExplorer.vue'
 const themeContext = inject(ThemeSymbol)
 if (!themeContext) throw new Error('Theme context not provided')
 const currentFile = ref<FileItem | null>(null)
 const { theme, setTheme } = themeContext
 const selected = ref<Theme>(theme.value)
-import CodeEditor from '../../components/CodeEditor.vue'
+import CodeEditor from '@/components/CodeEditor.vue'
 
 
 const props = defineProps({
@@ -348,7 +348,7 @@ async function handleOpenFile(file: any) {
     }
 
     // 正常解析 cells
-    cells.value = fileData.cells.map((c, index) => ({
+    cells.value = fileData.cells.map((c: Cell, index: number) => ({
       id: generateId(),
       content: c?.input ?? `# 第 ${index + 1} 单元格无内容`,
       output: c?.output ?? ''
@@ -398,7 +398,7 @@ let initialMouseX = 0
 let initialSidebarWidth = 250
 
 
-function onResizeMove(event) {
+function onResizeMove(event: MouseEvent) {
   if (!resizingActive.value) return
   const movementX = event.clientX - initialMouseX
   sidebarWidth.value = Math.min(Math.max(initialSidebarWidth + movementX, 5), 800)
@@ -410,7 +410,7 @@ function onResizeEnd() {
   document.removeEventListener('mouseup', onResizeEnd)
 }
 
-function beginResize(event) {
+function beginResize(event: MouseEvent) {
   resizingActive.value = true
   initialMouseX = event.clientX
   initialSidebarWidth = sidebarWidth.value
@@ -434,7 +434,7 @@ let startWidth = 250
 
 
 // 拖动逻辑
-const startResizing = (e) => {
+const startResizing = (e: MouseEvent) => {
   isResizing.value = true
   startX = e.clientX
   startWidth = explorerWidth.value
@@ -442,7 +442,7 @@ const startResizing = (e) => {
   document.addEventListener('mouseup', stopResizing)
 }
 
-const resize = (e) => {
+const resize = (e: MouseEvent) => {
   if (!isResizing.value) return
   const delta = e.clientX - startX
   explorerWidth.value = Math.min(Math.max(startWidth + delta, 5), 1000)
@@ -506,6 +506,7 @@ interface Cell {
   currentExecutionTime?: number;
   progress?: number;
   timer?: number;
+  input?: string;
 }
 
 const cells = ref<Cell[]>([
@@ -547,7 +548,7 @@ function getFileIcon(filename: string): string {
   }
 }
 
-const loadFile = async (filename) => {
+const loadFile = async (filename: string) => {
   try {
     const res = await openFileApi(filename)
     return res.data
@@ -570,7 +571,7 @@ const openFile = async (file: FileItem) => {
     }
 
     // 正常解析 cells
-    cells.value = fileData.cells.map((c, index) => ({
+    cells.value = fileData.cells.map((c: Cell, index: number) => ({
       id: generateId(),
       content: c?.input ?? `# 第 ${index + 1} 单元格无内容`,
       output: c?.output ?? ''
