@@ -283,6 +283,7 @@ import { inject, ref, watch, nextTick, onMounted, onBeforeUnmount, toRaw, comput
 import { ThemeSymbol, Theme } from '../../theme-context'
 import { getFileListApi, openFileApi, runCellApi, saveFileApi } from '../../api/Document.ts'
 import FileExplorer from '../../components/FileExplorer.vue'
+import { ElMessage } from 'element-plus'
 const themeContext = inject(ThemeSymbol)
 if (!themeContext) throw new Error('Theme context not provided')
 const currentFile = ref<FileItem | null>(null)
@@ -683,9 +684,11 @@ async function saveCell(index: number) {
 
   try {
     const result = await saveFileApi(documentToSave);
-    alert(result.msg || `单元格 ${index + 1} 保存成功`);
+    ElMessage.success(result.msg || `单元格 ${index + 1} 保存成功`)
+    // alert(result.msg || `单元格 ${index + 1} 保存成功`);
   } catch (error) {
-    alert(`保存失败：${(error as Error).message}`);
+    ElMessage.error(`保存失败：${(error as Error).message}`)
+    // alert(`保存失败：${(error as Error).message}`);
   }
 }
 
