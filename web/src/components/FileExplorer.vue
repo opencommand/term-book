@@ -103,7 +103,7 @@
     <div class="modal" v-if="showDialog">
       <div class="modal-content">
         <h3>{{ dialogTitle }}</h3>
-        <input v-model="dialogInput" ref="dialogInput" class="modal-input" :placeholder="dialogPlaceholder"
+        <input v-model="dialogInput" ref="inputRef" class="modal-input" :placeholder="dialogPlaceholder"
           @keyup.enter="confirmDialog" />
         <div class="modal-actions">
           <button @click="cancelDialog">取消</button>
@@ -137,7 +137,14 @@ const props = defineProps({
   }
 });
 
-const emit = defineEmits(['open-file', 'create-file', 'create-folder', 'delete-file', 'delete-folder', 'rename-file']);
+const emit = defineEmits([
+  'open-file',
+  'create-file',
+  'create-folder',
+  'delete-file',
+  'delete-folder',
+  'rename-file'
+]);
 
 const fileList = ref<FolderItem[]>(props.initialFiles);
 const activeFile = ref('');
@@ -152,6 +159,7 @@ const dialogPlaceholder = ref('');
 const dialogAction = ref<'create-file' | 'create-folder' | 'rename-file' | null>(null);
 const currentFolder = ref<FolderItem | null>(null);
 const currentFile = ref<FileItem | null>(null);
+const inputRef = ref<HTMLInputElement | null>(null);
 
 // 文件图标映射
 function getFileIcon(filename: string): string {
@@ -189,10 +197,10 @@ function createNewFile(folder: FolderItem) {
   dialogTitle.value = `在 ${folder.name} 中新建文件`;
   dialogPlaceholder.value = '请输入文件名 (例如: script.py)';
   dialogAction.value = 'create-file';
+  dialogInput.value = '';
   showDialog.value = true;
   nextTick(() => {
-    const input = document.querySelector('.modal-input') as HTMLInputElement;
-    input?.focus();
+    inputRef.value?.focus();
   });
 }
 
@@ -202,10 +210,10 @@ function createNewFolder(folder: FolderItem) {
   dialogTitle.value = `在 ${folder.name} 中新建文件夹`;
   dialogPlaceholder.value = '请输入文件夹名';
   dialogAction.value = 'create-folder';
+  dialogInput.value = '';
   showDialog.value = true;
   nextTick(() => {
-    const input = document.querySelector('.modal-input') as HTMLInputElement;
-    input?.focus();
+    inputRef.value?.focus();
   });
 }
 
@@ -218,9 +226,8 @@ function renameFile(file: FileItem) {
   dialogAction.value = 'rename-file';
   showDialog.value = true;
   nextTick(() => {
-    const input = document.querySelector('.modal-input') as HTMLInputElement;
-    input?.focus();
-    input?.select();
+    inputRef.value?.focus();
+    inputRef.value?.select();
   });
 }
 
@@ -279,6 +286,7 @@ function closeDialog() {
   dialogInput.value = '';
 }
 </script>
+
 
 <style scoped>
 .explorer-content {
@@ -417,9 +425,9 @@ function closeDialog() {
 }
 
 .modal-input {
-  width: 100%;
+  width: 96%;
   margin: 12px 0;
-  padding: 8px;
+  padding: 8px 2%;
   border: 1px solid var(--border-color);
   border-radius: 4px;
   background-color: var(--input-bg);
