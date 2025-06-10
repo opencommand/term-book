@@ -1007,7 +1007,7 @@ onBeforeUnmount(() => {
 }
 
 .run-button {
-  padding: 2px 8px;
+  padding: 0px 4px;
   font-size: 12px;
   min-width: 0;
 }

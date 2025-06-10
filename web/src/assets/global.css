@@ -1,8 +1,9 @@
 :root {
   --bg-color: #ffffff;
   --text-color: #333333;
-  --button-bg: #4CAF50;
-  --button-text-color: #ffffff;
+  --button-bg: #5a7d7c;       /* 暗蓝灰色调，沉稳 */
+--button-text-color: #f0f0f0;
+
   --card-bg: #f4f4f4;
   --link-color: #1E90FF;
   --accent-color: #2196F3;
@@ -120,6 +121,9 @@ html.dark {
   --highlight-color: #333;
   --link-color: #bb86fc;
   --accent-color: #3700B3;
+  --button-bg: #3a4a5a;
+--button-text-color: #d0d0d0;
+
 }
 
 .dark .card {
