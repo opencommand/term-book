@@ -254,7 +254,25 @@
       </div>
     </div>
   </div>
-  <div v-else>loading </div>
+  <div v-else class="advanced-loading">
+    <div class="loading-content">
+      <div class="loading-logo">
+        <svg viewBox="0 0 100 100" class="loading-svg">
+          <path d="M50 10 L90 50 L50 90 L10 50 Z" fill="none" stroke="var(--accent-color)" stroke-width="8" />
+        </svg>
+      </div>
+      <div class="loading-dots">
+        <div class="dot"></div>
+        <div class="dot"></div>
+        <div class="dot"></div>
+      </div>
+      <div class="loading-status">
+        <div class="status-text">正在加载资源</div>
+        <div class="status-progress">0%</div>
+      </div>
+      <div class="loading-hint">请稍候，这可能需要几秒钟...</div>
+    </div>
+  </div>
 </template>
 
 <script setup lang="ts">
@@ -1210,5 +1228,107 @@ textarea:disabled {
   cursor: ew-resize;
   user-select: none;
   background-color: transparent;
+}
+
+
+
+
+
+
+
+
+
+.advanced-loading {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 100vh;
+  background-color: var(--bg-color);
+}
+
+.loading-content {
+  text-align: center;
+  max-width: 300px;
+}
+
+.loading-logo {
+  margin-bottom: 30px;
+}
+
+.loading-svg {
+  width: 80px;
+  height: 80px;
+  animation: rotate 2s linear infinite;
+}
+
+.loading-dots {
+  display: flex;
+  justify-content: center;
+  gap: 10px;
+  margin-bottom: 20px;
+}
+
+.dot {
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  background-color: var(--accent-color);
+  opacity: 0.6;
+  animation: pulse 1.5s infinite ease-in-out;
+}
+
+.dot:nth-child(2) {
+  animation-delay: 0.2s;
+}
+
+.dot:nth-child(3) {
+  animation-delay: 0.4s;
+}
+
+.loading-status {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 10px;
+  font-size: 14px;
+  color: var(--text-color);
+}
+
+.status-text {
+  opacity: 0.8;
+}
+
+.status-progress {
+  font-weight: bold;
+  color: var(--accent-color);
+}
+
+.loading-hint {
+  font-size: 12px;
+  color: var(--text-color);
+  opacity: 0.6;
+}
+
+@keyframes rotate {
+  from {
+    transform: rotate(0deg);
+  }
+
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@keyframes pulse {
+
+  0%,
+  100% {
+    transform: scale(0.8);
+    opacity: 0.6;
+  }
+
+  50% {
+    transform: scale(1.2);
+    opacity: 1;
+  }
 }
 </style>
