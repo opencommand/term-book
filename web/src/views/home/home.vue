@@ -691,30 +691,32 @@ async function saveCell(index: number) {
 
 
 async function executeCell(index: number) {
-  // 获取指定的 cell
   const cell = cells.value[index];
 
-  // 如果正在执行，避免重复提交
   if (cell.isRunning) return;
 
-  // 设置执行状态
   cell.isRunning = true;
   cell.output = "正在执行...";
   cell.progress = 0;
   cell.currentExecutionTime = 0;
 
-  // 记录开始时间
   const startTime = Date.now();
 
-  try {
-    const startTime = Date.now();
+  // 实时更新执行时间和模拟进度条
+  const timer = setInterval(() => {
+    cell.currentExecutionTime = Date.now() - startTime;
 
-    // 假设 cell.content 是纯字符串命令
+    // 模拟进度条
+    const elapsed = cell.currentExecutionTime;
+    cell.progress = Math.min(90, Math.floor((elapsed / 1000) * 90));
+  }, 100); // 每 100ms 更新一次
+
+  try {
+    await new Promise(resolve => setTimeout(resolve, 1000));
+
     console.log(cell.content);
 
     const response = await runCellApi(cell.content);
-
-    // response.data 是后端返回的data字段
     const result = response.data;
 
     cell.output = result.output || "执行完成";
@@ -723,12 +725,12 @@ async function executeCell(index: number) {
   } catch (error) {
     cell.output = `执行出错：${(error as Error).message}`;
   } finally {
+    clearInterval(timer); // 清除定时器
     cell.isRunning = false;
     cell.progress = 100;
+    cell.currentExecutionTime = Date.now() - startTime;
   }
-
 }
-
 
 
 
