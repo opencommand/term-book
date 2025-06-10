@@ -12,7 +12,7 @@
 
 <script setup lang="ts">
 import { inject, ref, watch } from 'vue'
-import { ThemeSymbol, Theme } from '../theme-context'
+import { ThemeSymbol, Theme } from '@/theme-context'
 
 const themeContext = inject(ThemeSymbol)
 if (!themeContext) throw new Error('Theme context not provided')

@@ -6,6 +6,6 @@
 </template>
 
 <script setup lang="ts">
-import ThemeProvider from './components/ThemeProvider.vue'
-import Test from '../src/views/test.vue'
+import ThemeProvider from '@/components/ThemeProvider.vue'
+import Test from '@/views/test.vue'
 </script>
