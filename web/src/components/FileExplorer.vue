@@ -70,7 +70,8 @@
           <div class="file-item" v-for="file in folder.files" :key="file.name"
             :class="{ active: activeFile === file.path }" @click="openFile(file)" @mouseenter="hoveredFile = file.path"
             @mouseleave="hoveredFile = ''">
-            <span class="icon">{{ getFileIcon(file.name) }}</span>
+            <!-- <span class="icon">{{ getFileIcon(file.name) }}</span> -->
+            <component :is="getFileIcon(file.name)" />
             <span class="file-name">{{ file.name }}</span>
 
             <!-- 文件操作按钮 -->
@@ -115,7 +116,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, nextTick } from 'vue';
+import { ref, nextTick, defineAsyncComponent, h } from 'vue';
 
 interface FileItem {
   name: string;
@@ -162,22 +163,46 @@ const currentFile = ref<FileItem | null>(null);
 const inputRef = ref<HTMLInputElement | null>(null);
 
 // 文件图标映射
-function getFileIcon(filename: string): string {
+// function getFileIcon(filename: string): string {
+//   const ext = filename.split('.').pop()?.toLowerCase();
+//   const icons: Record<string, string> = {
+//     'ipynb': '📓',
+//     'py': '🐍',
+//     'js': '📜',
+//     'ts': '📜',
+//     'json': '📋',
+//     'md': '📝',
+//     'txt': '📄',
+//     'csv': '📊',
+//     'jpg': '🖼️',
+//     'png': '🖼️',
+//     'gif': '🖼️',
+//   };
+//   return icons[ext || ''] || '📄';
+// }
+// 异步加载FileIcons组件
+const FileIcon = defineAsyncComponent(() => import('./FileIcons.vue'));
+
+// 文件图标映射
+function getFileIcon(filename: string) {
   const ext = filename.split('.').pop()?.toLowerCase();
-  const icons: Record<string, string> = {
-    'ipynb': '📓',
-    'py': '🐍',
-    'js': '📜',
-    'ts': '📜',
-    'json': '📋',
-    'md': '📝',
-    'txt': '📄',
-    'csv': '📊',
-    'jpg': '🖼️',
-    'png': '🖼️',
-    'gif': '🖼️',
+  const iconTypes: Record<string, string> = {
+    'ipynb': 'ipynb',
+    'py': 'py',
+    'js': 'js',
+    'ts': 'ts',
+    'json': 'json',
+    'md': 'md',
+    'txt': 'txt',
+    'csv': 'csv',
+    'jpg': 'jpg',
+    'png': 'png',
+    'gif': 'gif'
   };
-  return icons[ext || ''] || '📄';
+
+  return h(FileIcon, {
+    type: iconTypes[ext || ''] || 'default'
+  });
 }
 
 // 切换文件夹展开状态
