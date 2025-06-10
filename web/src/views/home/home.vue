@@ -80,25 +80,24 @@
 
         </button>
       </div>
-      <div class="explorer-content">
+      <!-- <div class="explorer-content">
         <div class="file-tree">
           <div class="folder" v-for="folder in fileList" :key="folder.name">
             <div class="folder-header" @click="toggleFolder(folder)">
               <span class="icon" style="display: flex; align-items: center; gap: 4px;">
-                <!-- 展开箭头（向下） -->
+                
                 <svg v-if="folder.expanded" xmlns="http://www.w3.org/2000/svg" width="14" height="14" fill="none"
                   stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
                   <path stroke-linecap="round" stroke-linejoin="round" d="M6 9l6 6 6-6" />
                 </svg>
 
-                <!-- 收起箭头（向右） -->
+                
                 <svg v-else xmlns="http://www.w3.org/2000/svg" width="14" height="14" fill="none" stroke="currentColor"
                   stroke-width="2" viewBox="0 0 24 24">
                   <path stroke-linecap="round" stroke-linejoin="round" d="M9 6l6 6-6 6" />
                 </svg>
 
-                <!-- 文件夹图标（始终显示） -->
-                <!-- 文件夹图标（已支持主题变色） -->
+             
                 <svg t="1749520567168" class="icon" viewBox="0 0 1024 1024" version="1.1"
                   xmlns="http://www.w3.org/2000/svg" p-id="11365" width="14" height="14" fill="currentColor">
                   <path
@@ -121,8 +120,10 @@
             </div>
           </div>
         </div>
-      </div>
-
+      </div> -->
+      <FileExplorer :initial-files="fileList" @open-file="handleOpenFile" @create-file="handleCreateFile"
+        @create-folder="handleCreateFolder" @delete-file="handleDeleteFile" @delete-folder="handleDeleteFolder"
+        @rename-file="handleRenameFile" />
       <!-- 拖动句柄 -->
       <div class="resizer" @mousedown="startResizing"></div>
     </div>
@@ -279,6 +280,7 @@
 import { inject, ref, watch, nextTick, onMounted, onBeforeUnmount, toRaw } from 'vue'
 import { ThemeSymbol, Theme } from '../../theme-context'
 import { getFileListApi, openFileApi, runCellApi, saveFileApi } from '../../api/Document.ts'
+import FileExplorer from '../../components/FileExplorer.vue'
 const themeContext = inject(ThemeSymbol)
 if (!themeContext) throw new Error('Theme context not provided')
 const currentFile = ref<FileItem | null>(null)
@@ -294,7 +296,37 @@ const loading = ref(false)
 const activeFile = ref<string | null>(null)
 const showFileExplorer = ref(true)
 
+async function handleOpenFile(file: any) {
+  console.log('打开文件:', file);
+  // 实现打开文件逻辑
+  activeFile.value = file.name
+  currentFile.value = file
+  try {
+    const fileData = await loadFile(file.name)
 
+    // 数据为空或格式不正确
+    if (!fileData || !Array.isArray(fileData.cells)) {
+      console.warn('文件内容无效或不包含 cells 字段', fileData)
+      cells.value = []
+      return
+    }
+
+    // 正常解析 cells
+    cells.value = fileData.cells.map((c, index) => ({
+      id: generateId(),
+      content: c?.input ?? `# 第 ${index + 1} 单元格无内容`,
+      output: c?.output ?? ''
+    }))
+  } catch (error) {
+    console.error('读取文件内容失败', error)
+    cells.value = [] // 确保界面不会残留旧内容
+  }
+}
+
+function handleCreateFile({ folder, name }: any) {
+  console.log('新建文件:', folder, name);
+  // 实现新建文件逻辑
+}
 
 
 
