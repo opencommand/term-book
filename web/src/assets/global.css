@@ -1,18 +1,20 @@
 :root {
   --bg-color: #ffffff;
-  --text-color: #333333;
-  --button-bg: #5a7d7c;       /* 暗蓝灰色调，沉稳 */
---button-text-color: #f0f0f0;
+  --text-color: #1a1a1a;           /* 更深的灰，增强可读性 */
+  --button-bg: #3e5c5b;           /* 更深一点的蓝灰色 */
+  --button-text-color: #ffffff;   /* 更明亮，提升对比 */
 
-  --card-bg: #f4f4f4;
-  --link-color: #1E90FF;
-  --accent-color: #2196F3;
-  --border-color: #e0e0e0;
-  --shadow-color: rgba(0,0,0,0.1);
-  --hover-bg: #f0f0f0;
-  --input-bg: #ffffff;
-  --highlight-color: #E3F2FD;
+  --card-bg: #eeeeee;             /* 稍深一点的灰色卡片背景 */
+  --link-color: #0066cc;          /* 更深的蓝，提升对比 */
+  --accent-color: #1976D2;        /* 更深的主色调蓝色 */
+  --border-color: #cccccc;        /* 稍深的边框色 */
+  --shadow-color: rgba(0, 0, 0, 0.15); /* 稍重一点阴影 */
+  --hover-bg: #e6e6e6;            /* 更明显的悬停效果 */
+  --input-bg: #fdfdfd;            /* 略微暗一点输入框背景 */
+  --highlight-color: #BBDEFB;     /* 更醒目的高亮色 */
+   --selected-color: #0b2b50; /* 高对比被选中颜色 */
 }
+
 
 /* Light Theme (default) */
 body {
@@ -123,6 +125,7 @@ html.dark {
   --accent-color: #3700B3;
   --button-bg: #3a4a5a;
 --button-text-color: #d0d0d0;
+--selected-color: #ffffff;
 
 }
 
@@ -135,18 +138,20 @@ html.dark {
 }
 
 /* Solarized Theme */
+/* Solarized Theme - Higher Contrast */
 html.solarized {
   --bg-color: #fdf6e3;
-  --text-color: #657b83;
-  --card-bg: #eee8d5;
-  --button-bg: #268bd2;
-  --link-color: #b58900;
-  --border-color: #93a1a1;
-  --shadow-color: rgba(147, 161, 161, 0.2);
-  --hover-bg: #eee8d5;
-  --input-bg: #fdf6e3;
-  --highlight-color: #eee8d5;
-  --accent-color: #d33682;
+  --text-color: #073642;          /* 原方案更深的文本色，来自 Solarized dark */
+  --card-bg: #e8dfc9;             /* 更明显区别于背景 */
+  --button-bg: #006dab;           /* 更深的蓝色按钮，仍然保留冷静风格 */
+  --link-color: #b58900;          /* 保留原色，已具辨识度 */
+  --border-color: #586e75;        /* 更暗一点的边框色 */
+  --shadow-color: rgba(0, 0, 0, 0.15); /* 更实的阴影 */
+  --hover-bg: #e0dac2;            /* 悬停效果更清晰 */
+  --input-bg: #fffbe8;            /* 略微提亮输入框背景 */
+  --highlight-color: #e5d9b5;     /* 更醒目的高亮色 */
+  --accent-color: #cb2f74;        /* 稍深一些的洋红色强调色 */
+   --selected-color: #986801; /* 更深一阶，适合选中状态 */
 }
 
 .solarized .card {
@@ -174,6 +179,8 @@ html.dracula {
   --input-bg: #44475a;
   --highlight-color: #44475a;
   --accent-color: #ff79c6;
+  --selected-color: #1E90FF; /* DodgerBlue，深色背景下可读性极强 */
+
 }
 
 .dracula .card {
